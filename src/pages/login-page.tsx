@@ -55,7 +55,7 @@ export function LoginPage() {
               <p>Get your entries in, invite more people, and get ready for a season where nobody truly knows what will happen!.</p>
               <div className="flex items-center gap-3 rounded-3xl border border-white/10 bg-white/[0.03] p-4 text-text">
                 <Flag className="h-6 w-6 text-accent" />
-                <span>Approved emails only. Shared league password.</span>
+                <span>Approved emails only. Shared league password. </span>
               </div>
             </div>
           </div>
