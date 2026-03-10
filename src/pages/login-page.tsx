@@ -48,11 +48,11 @@ export function LoginPage() {
         <div className="hidden border-r border-white/10 bg-gradient-to-br from-accent/20 via-transparent to-accent2/10 p-10 lg:block">
           <div className="flex h-full flex-col justify-between">
             <div>
-              <p className="font-display text-xs uppercase tracking-[0.5em] text-accent2">Private League</p>
-              <h1 className="mt-4 max-w-lg font-display text-6xl font-bold leading-none text-gradient">Race picks. Lock. Reveal. Score.</h1>
+              <p className="font-display text-xs uppercase tracking-[0.5em] text-accent2">Unofficial AZ Private F1 Fantasy League</p>
+              <h1 className="mt-4 max-w-lg font-display text-6xl font-bold leading-none text-gradient">Pick. Lock. Race. Score.</h1>
             </div>
             <div className="space-y-4 text-sm leading-6 text-muted">
-              <p>Built for a small private grid. Fast picks entry, strict lock timing, clean standings, and admin-controlled results.</p>
+              <p>Get your entries in, invite more people, and get ready for a season where nobody truly knows what will happen.</p>
               <div className="flex items-center gap-3 rounded-3xl border border-white/10 bg-white/[0.03] p-4 text-text">
                 <Flag className="h-6 w-6 text-accent" />
                 <span>Approved emails only. Shared league password. Server-side lock enforcement.</span>
