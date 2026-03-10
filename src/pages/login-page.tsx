@@ -52,7 +52,7 @@ export function LoginPage() {
               <h1 className="mt-4 max-w-lg font-display text-6xl font-bold leading-none text-gradient">Pick. Lock. Race. Score.</h1>
             </div>
             <div className="space-y-4 text-sm leading-6 text-muted">
-              <p>Get your entries in, invite more people, and get ready for a season where nobody truly knows what will happen.</p>
+              <p>Get your entries in, invite more people, and get ready for a season where nobody truly knows what will happen!.</p>
               <div className="flex items-center gap-3 rounded-3xl border border-white/10 bg-white/[0.03] p-4 text-text">
                 <Flag className="h-6 w-6 text-accent" />
                 <span>Approved emails only. Shared league password.</span>
