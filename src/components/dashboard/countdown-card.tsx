@@ -3,7 +3,7 @@ import { TimerReset } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatCountdown, formatDateTime } from '@/lib/format';
-import { isRaceLocked } from '@/lib/domain';
+import { isRaceLocked, isSprintLocked } from '@/lib/domain';
 import type { Race } from '@/types/domain';
 
 export function CountdownCard({ race }: { race: Race | null }) {
@@ -15,10 +15,14 @@ export function CountdownCard({ race }: { race: Race | null }) {
     );
   }
 
-  const locked = isRaceLocked(race.lockAt);
+  const sprintLocked = race.hasSprint && isSprintLocked(race);
+  const raceLocked = isRaceLocked(race.lockAt);
+  const nextDeadline = race.hasSprint && !sprintLocked ? race.sprintLockAt : race.lockAt;
+  const statusLabel = raceLocked ? 'Locked' : sprintLocked ? 'Race Only' : 'Open';
+  const deadlineLabel = race.hasSprint && !sprintLocked ? 'Sprint lock' : 'Race lock';
 
   return (
-    <Card eyebrow={`Round ${race.roundNumber}`} title={race.grandPrixName} action={<Badge tone={locked ? 'warning' : 'success'}>{locked ? 'Locked' : 'Open'}</Badge>}>
+    <Card eyebrow={`Round ${race.roundNumber}`} title={race.grandPrixName} action={<Badge tone={raceLocked ? 'warning' : 'success'}>{statusLabel}</Badge>}>
       <div className="flex items-center gap-4">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
@@ -29,8 +33,8 @@ export function CountdownCard({ race }: { race: Race | null }) {
           <TimerReset className="h-8 w-8" />
         </motion.div>
         <div>
-          <p className="font-display text-4xl font-bold text-text">{formatCountdown(race.lockAt)}</p>
-          <p className="mt-1 text-sm text-muted">Lock deadline: {formatDateTime(race.lockAt)}</p>
+          <p className="font-display text-4xl font-bold text-text">{formatCountdown(nextDeadline ?? race.lockAt)}</p>
+          <p className="mt-1 text-sm text-muted">{deadlineLabel}: {formatDateTime(nextDeadline ?? race.lockAt)}</p>
         </div>
       </div>
     </Card>

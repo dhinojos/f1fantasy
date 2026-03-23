@@ -1,4 +1,4 @@
-import { buildDashboardStats, canViewPick, isRaceLocked, validateUniqueDrivers } from '@/lib/domain';
+import { buildDashboardStats, canViewPick, isRaceLocked, isSprintLocked, validateUniqueDrivers } from '@/lib/domain';
 import { requireSupabaseClient } from '@/services/supabase/client';
 import { mapPick, mapProfile, mapRace, mapResult, mapScore } from '@/services/supabase/mappers';
 import type { DashboardStats, PickFormValues, PickSubmission, Profile, Race, RaceResult, RaceScore } from '@/types/domain';
@@ -36,6 +36,7 @@ export async function fetchUpcomingRace(): Promise<Race | null> {
       grand_prix_name,
       round_number,
       race_date,
+      sprint_lock_at,
       lock_at,
       has_sprint,
       status,
@@ -135,6 +136,19 @@ export async function fetchVisiblePicks(race: Race, viewerId: string): Promise<P
   return (data ?? []).map(mapPick).filter((pick) => canViewPick(viewerId, pick.userId, race.lockAt));
 }
 
+export async function fetchRaceScores(raceId: string): Promise<RaceScore[]> {
+  const { data, error } = await requireSupabaseClient()
+    .from('scores')
+    .select('id,race_id,user_id,sprint_points,pole_points,podium_points,top10_points,race_points,cumulative_points')
+    .eq('race_id', raceId);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map(mapScore);
+}
+
 export async function savePick(race: Race, userId: string, values: PickFormValues): Promise<void> {
   if (isRaceLocked(race.lockAt)) {
     throw new Error('This race is already locked.');
@@ -144,11 +158,22 @@ export async function savePick(race: Race, userId: string, values: PickFormValue
     throw new Error('Race finishing picks must be unique.');
   }
 
+  const existingPick = await fetchCurrentUserPick(race.id, userId);
+  const sprintLocked = race.hasSprint && isSprintLocked(race);
+
   const payload = {
     race_id: race.id,
     user_id: userId,
-    sprint_winner_driver_id: race.hasSprint ? values.sprintWinnerDriverId : null,
-    sprint_second_driver_id: race.hasSprint ? values.sprintSecondDriverId : null,
+    sprint_winner_driver_id: race.hasSprint
+      ? sprintLocked
+        ? existingPick?.sprintWinnerDriverId ?? null
+        : values.sprintWinnerDriverId
+      : null,
+    sprint_second_driver_id: race.hasSprint
+      ? sprintLocked
+        ? existingPick?.sprintSecondDriverId ?? null
+        : values.sprintSecondDriverId
+      : null,
     pole_driver_id: values.poleDriverId,
     top10_driver_ids: values.top10DriverIds,
   };
@@ -264,6 +289,7 @@ export async function fetchRaceResults(): Promise<{
         grand_prix_name,
         round_number,
         race_date,
+        sprint_lock_at,
         lock_at,
         has_sprint,
         status,
@@ -300,6 +326,7 @@ export async function saveRace(values: {
   grandPrixName: string;
   roundNumber: number;
   raceDate: string;
+  sprintLockAt: string;
   lockAt: string;
   hasSprint: boolean;
   driverIds: string[];
@@ -311,6 +338,7 @@ export async function saveRace(values: {
       grand_prix_name: values.grandPrixName,
       round_number: values.roundNumber,
       race_date: values.raceDate,
+      sprint_lock_at: values.hasSprint ? values.sprintLockAt : null,
       lock_at: values.lockAt,
       has_sprint: values.hasSprint,
       status: 'upcoming',

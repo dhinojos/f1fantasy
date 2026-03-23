@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildDashboardStats, canViewPick, isRaceLocked, scoreRace, validateUniqueDrivers } from '@/lib/domain';
-import type { PickSubmission, RaceResult, RaceScore } from '@/types/domain';
+import { buildDashboardStats, canViewPick, isRaceLocked, isSprintLocked, scoreRace, validateUniqueDrivers } from '@/lib/domain';
+import type { PickSubmission, Race, RaceResult, RaceScore } from '@/types/domain';
 import { DRIVER_FIXTURES } from '@/lib/constants';
 
 const basePick: PickSubmission = {
@@ -25,6 +25,18 @@ const baseResult: RaceResult = {
   updatedAt: '2026-03-02T12:00:00.000Z',
 };
 
+const sprintRace: Race = {
+  id: 'race-1',
+  grandPrixName: 'Australian Grand Prix',
+  roundNumber: 1,
+  raceDate: '2026-12-09',
+  sprintLockAt: '2026-12-08T12:00:00.000Z',
+  lockAt: '2026-12-09T12:00:00.000Z',
+  hasSprint: true,
+  status: 'upcoming',
+  activeDrivers: DRIVER_FIXTURES,
+};
+
 describe('lock deadline behavior', () => {
   it('locks when current time reaches the deadline', () => {
     expect(isRaceLocked('2026-03-09T12:00:00.000Z', new Date('2026-03-09T12:00:00.000Z'))).toBe(true);
@@ -32,6 +44,10 @@ describe('lock deadline behavior', () => {
 
   it('remains editable before the deadline', () => {
     expect(isRaceLocked('2026-03-09T12:00:00.000Z', new Date('2026-03-09T11:59:59.000Z'))).toBe(false);
+  });
+
+  it('locks sprint picks at the sprint deadline', () => {
+    expect(isSprintLocked(sprintRace, new Date('2026-12-08T12:00:00.000Z'))).toBe(true);
   });
 });
 
@@ -98,5 +114,19 @@ describe('dashboard aggregation', () => {
 
     expect(stats.insights.mostPickedPole).toBe('Max Verstappen');
     expect(stats.playerAccuracy[0]?.podiumHitRate).toBe(50);
+  });
+
+  it('uses the sprint cutoff as the next dashboard deadline when sprint picks are still open', () => {
+    const stats = buildDashboardStats({
+      standings: [],
+      lastRaceScores: [],
+      nextRace: sprintRace,
+      currentUserSubmission: null,
+      allVisiblePicks: [],
+      latestResult: null,
+      drivers: DRIVER_FIXTURES,
+    });
+
+    expect(stats.nextLockAt).toBe('2026-12-08T12:00:00.000Z');
   });
 });

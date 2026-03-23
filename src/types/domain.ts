@@ -30,6 +30,7 @@ export interface Race {
   grandPrixName: string;
   roundNumber: number;
   raceDate: string;
+  sprintLockAt: string | null;
   lockAt: string;
   hasSprint: boolean;
   status: RaceStatus;

@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { AlertTriangle } from 'lucide-react';
 import { PICK_POSITIONS } from '@/lib/constants';
-import { validateUniqueDrivers, isRaceLocked } from '@/lib/domain';
+import { validateUniqueDrivers, isRaceLocked, isSprintLocked } from '@/lib/domain';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import type { PickFormValues, PickSubmission, Race } from '@/types/domain';
@@ -19,7 +19,8 @@ export function PickForm({
   onSave: (values: PickFormValues) => Promise<void>;
 }) {
   const defaultTop10 = existingPick?.top10DriverIds ?? Array.from({ length: 10 }, () => '');
-  const locked = isRaceLocked(race.lockAt);
+  const sprintLocked = race.hasSprint && isSprintLocked(race);
+  const raceLocked = isRaceLocked(race.lockAt);
 
   const {
     control,
@@ -36,10 +37,10 @@ export function PickForm({
           top10DriverIds: z.array(z.string().min(1, 'Driver is required')).length(10, 'All finishing slots are required'),
         })
         .superRefine((value, ctx) => {
-          if (race.hasSprint && !value.sprintWinnerDriverId) {
+          if (race.hasSprint && !sprintLocked && !value.sprintWinnerDriverId) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['sprintWinnerDriverId'], message: 'Sprint 1st pick is required' });
           }
-          if (race.hasSprint && !value.sprintSecondDriverId) {
+          if (race.hasSprint && !sprintLocked && !value.sprintSecondDriverId) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['sprintSecondDriverId'], message: 'Sprint 2nd pick is required' });
           }
         }),
@@ -58,10 +59,15 @@ export function PickForm({
   return (
     <Card eyebrow={`Round ${race.roundNumber}`} title={`${race.grandPrixName} picks`}>
       <form className="space-y-5" onSubmit={handleSubmit(onSave)}>
-        {locked ? (
+        {raceLocked ? (
           <div className="flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent/10 px-4 py-4 text-sm text-accent">
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
             <span>Submissions are locked. Picks are read-only and visible to all players.</span>
+          </div>
+        ) : sprintLocked ? (
+          <div className="flex items-start gap-3 rounded-2xl border border-accent2/20 bg-accent2/10 px-4 py-4 text-sm text-accent2">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+            <span>Sprint picks are locked. You can still update pole and race finishing positions until the race lock.</span>
           </div>
         ) : null}
 
@@ -78,7 +84,7 @@ export function PickForm({
                       render={({ field }) => (
                         <select
                           {...field}
-                          disabled={locked}
+                          disabled={sprintLocked}
                           className="w-full rounded-2xl border border-white/10 bg-panel px-4 py-3 text-text outline-none transition focus:border-accent"
                         >
                           <option value="">Select driver</option>
@@ -100,7 +106,7 @@ export function PickForm({
                       render={({ field }) => (
                         <select
                           {...field}
-                          disabled={locked}
+                          disabled={sprintLocked}
                           className="w-full rounded-2xl border border-white/10 bg-panel px-4 py-3 text-text outline-none transition focus:border-accent"
                         >
                           <option value="">Select driver</option>
@@ -124,7 +130,7 @@ export function PickForm({
                   render={({ field }) => (
                     <select
                       {...field}
-                      disabled={locked}
+                      disabled={raceLocked}
                       className="w-full rounded-2xl border border-white/10 bg-panel px-4 py-3 text-text outline-none transition focus:border-accent"
                     >
                       <option value="">Select driver</option>
@@ -163,7 +169,7 @@ export function PickForm({
                 render={({ field }) => (
                   <select
                     {...field}
-                    disabled={locked}
+                    disabled={raceLocked}
                     className="w-full rounded-2xl border border-white/10 bg-panel px-4 py-3 text-text outline-none transition focus:border-accent"
                   >
                     <option value="">Select driver</option>
@@ -182,7 +188,7 @@ export function PickForm({
         {duplicates.length > 0 ? <p className="text-sm text-accent">Duplicate race finish picks selected: {duplicates.join(', ')}</p> : null}
         {errors.top10DriverIds ? <p className="text-sm text-accent">{errors.top10DriverIds.message}</p> : null}
 
-        <Button type="submit" disabled={locked || duplicates.length > 0 || isSubmitting}>
+        <Button type="submit" disabled={raceLocked || duplicates.length > 0 || isSubmitting}>
           {isSubmitting ? 'Saving...' : existingPick ? 'Update picks' : 'Save picks'}
         </Button>
       </form>

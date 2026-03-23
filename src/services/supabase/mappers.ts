@@ -28,6 +28,7 @@ interface RaceRow {
   grand_prix_name: string;
   round_number: number;
   race_date: string;
+  sprint_lock_at: string | null;
   lock_at: string;
   has_sprint: boolean;
   status: 'upcoming' | 'locked' | 'scored';
@@ -104,6 +105,7 @@ export function mapRace(row: RaceRow): Race {
     grandPrixName: row.grand_prix_name,
     roundNumber: row.round_number,
     raceDate: row.race_date,
+    sprintLockAt: row.sprint_lock_at,
     lockAt: row.lock_at,
     hasSprint: row.has_sprint,
     status: row.status,

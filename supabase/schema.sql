@@ -41,6 +41,7 @@ create table if not exists public.races (
   grand_prix_name text not null,
   round_number integer not null unique,
   race_date date not null,
+  sprint_lock_at timestamptz,
   lock_at timestamptz not null,
   has_sprint boolean not null default false,
   status text not null check (status in ('upcoming', 'locked', 'scored')) default 'upcoming',
@@ -48,6 +49,7 @@ create table if not exists public.races (
 );
 
 alter table public.races add column if not exists has_sprint boolean not null default false;
+alter table public.races add column if not exists sprint_lock_at timestamptz;
 
 create table if not exists public.race_drivers (
   race_id uuid not null references public.races(id) on delete cascade,

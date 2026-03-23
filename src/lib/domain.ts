@@ -17,8 +17,20 @@ export interface ScoreBreakdown {
   racePoints: number;
 }
 
-export function isRaceLocked(lockAt: string, now = new Date()): boolean {
+export function isLockedAt(lockAt: string | null, now = new Date()): boolean {
+  if (!lockAt) {
+    return false;
+  }
+
   return isAfter(now, new Date(lockAt)) || now.toISOString() === new Date(lockAt).toISOString();
+}
+
+export function isSprintLocked(race: Pick<Race, 'sprintLockAt'>, now = new Date()): boolean {
+  return isLockedAt(race.sprintLockAt, now);
+}
+
+export function isRaceLocked(lockAt: string, now = new Date()): boolean {
+  return isLockedAt(lockAt, now);
 }
 
 export function validateUniqueDrivers(values: PickFormValues): string[] {
@@ -138,7 +150,10 @@ export function buildDashboardStats(args: {
     standings: args.standings,
     lastRaceScores: args.lastRaceScores,
     nextRace: args.nextRace,
-    nextLockAt: args.nextRace?.lockAt ?? null,
+    nextLockAt:
+      args.nextRace && args.nextRace.hasSprint && !isSprintLocked(args.nextRace)
+        ? args.nextRace.sprintLockAt
+        : args.nextRace?.lockAt ?? null,
     currentUserSubmission: args.currentUserSubmission,
     allVisiblePicks: args.allVisiblePicks,
     latestResult: args.latestResult,
