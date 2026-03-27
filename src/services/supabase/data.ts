@@ -402,3 +402,13 @@ export async function saveResult(values: {
     throw rpcError;
   }
 }
+
+export async function recalculateScoresForRace(raceId: string): Promise<void> {
+  const { error } = await requireSupabaseClient().rpc('recalculate_scores_for_race', {
+    target_race_id: raceId,
+  });
+
+  if (error) {
+    throw error;
+  }
+}

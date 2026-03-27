@@ -325,6 +325,12 @@ create policy "users can update own picks before lock"
     and timezone('utc', now()) < (select lock_at from public.races where id = race_id)
   );
 
+create policy "admins manage picks"
+  on public.picks for all
+  to authenticated
+  using (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'))
+  with check (exists (select 1 from public.profiles where id = auth.uid() and role = 'admin'));
+
 create policy "admins manage races"
   on public.races for all
   to authenticated
