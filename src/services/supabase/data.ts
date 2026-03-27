@@ -149,8 +149,15 @@ export async function fetchRaceScores(raceId: string): Promise<RaceScore[]> {
   return (data ?? []).map(mapScore);
 }
 
-export async function savePick(race: Race, userId: string, values: PickFormValues): Promise<void> {
-  if (isRaceLocked(race.lockAt)) {
+export async function savePick(
+  race: Race,
+  userId: string,
+  values: PickFormValues,
+  options?: { allowLockedOverride?: boolean },
+): Promise<void> {
+  const allowLockedOverride = options?.allowLockedOverride ?? false;
+
+  if (!allowLockedOverride && isRaceLocked(race.lockAt)) {
     throw new Error('This race is already locked.');
   }
 
@@ -159,7 +166,7 @@ export async function savePick(race: Race, userId: string, values: PickFormValue
   }
 
   const existingPick = await fetchCurrentUserPick(race.id, userId);
-  const sprintLocked = race.hasSprint && isSprintLocked(race);
+  const sprintLocked = !allowLockedOverride && race.hasSprint && isSprintLocked(race);
 
   const payload = {
     race_id: race.id,

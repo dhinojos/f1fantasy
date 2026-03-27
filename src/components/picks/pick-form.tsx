@@ -13,14 +13,20 @@ export function PickForm({
   race,
   existingPick,
   onSave,
+  allowLockedEditing = false,
+  title,
+  eyebrow,
 }: {
   race: Race;
   existingPick: PickSubmission | null;
   onSave: (values: PickFormValues) => Promise<void>;
+  allowLockedEditing?: boolean;
+  title?: string;
+  eyebrow?: string;
 }) {
   const defaultTop10 = existingPick?.top10DriverIds ?? Array.from({ length: 10 }, () => '');
-  const sprintLocked = race.hasSprint && isSprintLocked(race);
-  const raceLocked = isRaceLocked(race.lockAt);
+  const sprintLocked = !allowLockedEditing && race.hasSprint && isSprintLocked(race);
+  const raceLocked = !allowLockedEditing && isRaceLocked(race.lockAt);
 
   const {
     control,
@@ -57,7 +63,7 @@ export function PickForm({
   const duplicates = useMemo(() => validateUniqueDrivers(values), [values]);
 
   return (
-    <Card eyebrow={`Round ${race.roundNumber}`} title={`${race.grandPrixName} picks`}>
+    <Card eyebrow={eyebrow ?? `Round ${race.roundNumber}`} title={title ?? `${race.grandPrixName} picks`}>
       <form className="space-y-5" onSubmit={handleSubmit(onSave)}>
         {raceLocked ? (
           <div className="flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent/10 px-4 py-4 text-sm text-accent">
