@@ -225,7 +225,8 @@ begin
     (
       select coalesce(sum(case
         when p.top10_driver_ids[idx] = any(result_row.top10_driver_ids)
-        then 1 else 0 end), 0)
+        then 1 + case when p.top10_driver_ids[idx] = result_row.top10_driver_ids[idx] then 1 else 0 end
+        else 0 end), 0)
       from generate_subscripts(p.top10_driver_ids, 1) as idx
     ) as top10_points,
     0,

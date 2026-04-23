@@ -57,6 +57,10 @@ export function scoreRace(pick: PickSubmission, result: RaceResult): ScoreBreakd
 
     if (result.top10DriverIds.includes(predictedDriver)) {
       top10Points += 1;
+
+      if (predictedDriver === actualDriver) {
+        top10Points += 1;
+      }
     }
 
     if (predictedDriver === actualDriver) {
@@ -143,7 +147,7 @@ export function buildDashboardStats(args: {
     userId: score.userId,
     displayName: score.user?.displayName ?? 'Player',
     podiumHitRate: Number(((score.podiumPoints / 12) * 100).toFixed(0)),
-    top10HitRate: Number(((score.top10Points / 10) * 100).toFixed(0)),
+    top10HitRate: Number(((score.top10Points / 20) * 100).toFixed(0)),
   }));
 
   return {
