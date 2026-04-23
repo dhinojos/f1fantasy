@@ -20,8 +20,9 @@ function pointsForTop10Pick(result: RaceResult | null, driverId: string, index: 
 
   const exactMatch = result.top10DriverIds[index] === driverId;
   const podiumPoints = index === 0 ? 5 : index === 1 ? 4 : index === 2 ? 3 : 0;
+  const exactTop10Bonus = exactMatch && index >= 3 ? 1 : 0;
 
-  return 1 + (exactMatch ? 1 + podiumPoints : 0);
+  return 1 + exactTop10Bonus + (exactMatch ? podiumPoints : 0);
 }
 
 export function PicksTable({

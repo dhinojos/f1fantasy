@@ -70,8 +70,8 @@ describe('scoring logic', () => {
       sprintPoints: 2,
       polePoints: 2,
       podiumPoints: 5,
-      top10Points: 16,
-      racePoints: 25,
+      top10Points: 15,
+      racePoints: 24,
     });
   });
 });
@@ -114,7 +114,7 @@ describe('dashboard aggregation', () => {
 
     expect(stats.insights.mostPickedPole).toBe('Max Verstappen');
     expect(stats.playerAccuracy[0]?.podiumHitRate).toBe(50);
-    expect(stats.playerAccuracy[0]?.top10HitRate).toBe(25);
+    expect(stats.playerAccuracy[0]?.top10HitRate).toBe(29);
   });
 
   it('uses the sprint cutoff as the next dashboard deadline when sprint picks are still open', () => {
