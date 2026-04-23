@@ -13,6 +13,17 @@ function labelForDriver(race: Race, driverId: string): string {
   return driver ? `${driver.code} · ${driver.fullName}` : driverId;
 }
 
+function pointsForTop10Pick(result: RaceResult | null, driverId: string, index: number): number {
+  if (!result || !driverId || !result.top10DriverIds.includes(driverId)) {
+    return 0;
+  }
+
+  const exactMatch = result.top10DriverIds[index] === driverId;
+  const podiumPoints = index === 0 ? 5 : index === 1 ? 4 : index === 2 ? 3 : 0;
+
+  return 1 + (exactMatch ? 1 + podiumPoints : 0);
+}
+
 export function PicksTable({
   race,
   races,
@@ -153,13 +164,7 @@ export function PicksTable({
 
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
                   {pick.top10DriverIds.map((driverId, index) => {
-                    const exactPoints = index === 0 ? 5 : index === 1 ? 4 : index === 2 ? 3 : 0;
-                    const points =
-                      result?.top10DriverIds[index] === driverId
-                        ? exactPoints + 1
-                        : result?.top10DriverIds.includes(driverId)
-                          ? 1
-                          : 0;
+                    const points = pointsForTop10Pick(result, driverId, index);
 
                     return (
                       <div key={`${pick.id}-${driverId}-${index}`}>
