@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useAuth } from '@/hooks/use-auth';
+import { hasRaceSubmission, hasSprintSubmission } from '@/lib/domain';
 import { fetchDashboard } from '@/services/supabase/data';
 import type { DashboardStats } from '@/types/domain';
 
@@ -36,19 +37,34 @@ export function DashboardPage() {
     return <div className="text-sm text-muted">Loading dashboard...</div>;
   }
 
+  const sprintSubmitted = data.nextRace ? hasSprintSubmission(data.currentUserSubmission, data.nextRace) : false;
+  const raceSubmitted = hasRaceSubmission(data.currentUserSubmission);
+
   return (
     <div className="space-y-6">
       <div className="grid gap-6 xl:grid-cols-[1.4fr,1fr]">
         <CountdownCard race={data.nextRace} />
         <Card eyebrow="Submission" title="Your status">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="font-display text-4xl font-bold text-text">{data.currentUserSubmission ? 'Ready' : 'Pending'}</p>
-              <p className="mt-2 text-sm text-muted">
-                {data.currentUserSubmission ? 'You have an active submission for the next race.' : 'No entry submitted yet.'}
-              </p>
+          <div className="grid gap-3">
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">Sprint</p>
+                <p className="mt-2 font-display text-3xl font-bold text-text">{sprintSubmitted ? 'Ready' : 'Pending'}</p>
+              </div>
+              <Badge tone={sprintSubmitted ? 'success' : 'warning'}>{sprintSubmitted ? 'Submitted' : 'Missing'}</Badge>
             </div>
-            <Badge tone={data.currentUserSubmission ? 'success' : 'warning'}>{data.currentUserSubmission ? 'Submitted' : 'Missing'}</Badge>
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">Race</p>
+                <p className="mt-2 font-display text-3xl font-bold text-text">{raceSubmitted ? 'Ready' : 'Pending'}</p>
+              </div>
+              <Badge tone={raceSubmitted ? 'success' : 'warning'}>{raceSubmitted ? 'Submitted' : 'Missing'}</Badge>
+            </div>
+            <p className="text-sm text-muted">
+              {data.currentUserSubmission
+                ? 'Sprint and race picks are tracked separately for the next round.'
+                : 'No picks submitted yet for the next round.'}
+            </p>
           </div>
         </Card>
       </div>

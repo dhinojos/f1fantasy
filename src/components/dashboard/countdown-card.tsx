@@ -17,13 +17,11 @@ export function CountdownCard({ race }: { race: Race | null }) {
 
   const sprintLocked = race.hasSprint && isSprintLocked(race);
   const raceLocked = isRaceLocked(race.lockAt);
-  const nextDeadline = race.hasSprint && !sprintLocked ? race.sprintLockAt : race.lockAt;
   const statusLabel = raceLocked ? 'Locked' : sprintLocked ? 'Race Only' : 'Open';
-  const deadlineLabel = race.hasSprint && !sprintLocked ? 'Sprint lock' : 'Race lock';
 
   return (
     <Card eyebrow={`Round ${race.roundNumber}`} title={race.grandPrixName} action={<Badge tone={raceLocked ? 'warning' : 'success'}>{statusLabel}</Badge>}>
-      <div className="flex items-center gap-4">
+      <div className="flex items-start gap-4">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -32,9 +30,25 @@ export function CountdownCard({ race }: { race: Race | null }) {
         >
           <TimerReset className="h-8 w-8" />
         </motion.div>
-        <div>
-          <p className="font-display text-4xl font-bold text-text">{formatCountdown(nextDeadline ?? race.lockAt)}</p>
-          <p className="mt-1 text-sm text-muted">{deadlineLabel}: {formatDateTime(nextDeadline ?? race.lockAt)}</p>
+        <div className="grid flex-1 gap-3 sm:grid-cols-2">
+          {race.hasSprint ? (
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted">Sprint lock</p>
+                <Badge tone={sprintLocked ? 'warning' : 'success'}>{sprintLocked ? 'Closed' : 'Open'}</Badge>
+              </div>
+              <p className="mt-3 font-display text-3xl font-bold text-text">{formatCountdown(race.sprintLockAt ?? race.lockAt)}</p>
+              <p className="mt-1 text-sm text-muted">{formatDateTime(race.sprintLockAt ?? race.lockAt)}</p>
+            </div>
+          ) : null}
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted">Race lock</p>
+              <Badge tone={raceLocked ? 'warning' : 'success'}>{raceLocked ? 'Closed' : 'Open'}</Badge>
+            </div>
+            <p className="mt-3 font-display text-3xl font-bold text-text">{formatCountdown(race.lockAt)}</p>
+            <p className="mt-1 text-sm text-muted">{formatDateTime(race.lockAt)}</p>
+          </div>
         </div>
       </div>
     </Card>

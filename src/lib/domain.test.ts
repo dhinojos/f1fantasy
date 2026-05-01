@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildDashboardStats, canViewPick, hasAnyRacePicks, hasCompleteRacePicks, isRaceLocked, isSprintLocked, scoreRace, validateUniqueDrivers } from '@/lib/domain';
+import { buildDashboardStats, canViewPick, hasAnyRacePicks, hasCompleteRacePicks, hasRaceSubmission, hasSprintSubmission, isRaceLocked, isSprintLocked, scoreRace, validateUniqueDrivers } from '@/lib/domain';
 import type { PickSubmission, Race, RaceResult, RaceScore } from '@/types/domain';
 import { DRIVER_FIXTURES } from '@/lib/constants';
 
@@ -87,6 +87,18 @@ describe('race pick completeness', () => {
 
     expect(hasAnyRacePicks(values)).toBe(true);
     expect(hasCompleteRacePicks(values)).toBe(false);
+  });
+
+  it('recognizes sprint-only submissions separately from race completion', () => {
+    const sprintOnlyPick: PickSubmission = {
+      ...basePick,
+      poleDriverId: null,
+      top10DriverIds: null,
+    };
+
+    expect(hasSprintSubmission(sprintOnlyPick, sprintRace)).toBe(true);
+    expect(hasRaceSubmission(sprintOnlyPick)).toBe(false);
+    expect(hasRaceSubmission(basePick)).toBe(true);
   });
 });
 

@@ -47,6 +47,26 @@ export function hasCompleteRacePicks(values: PickFormValues): boolean {
   return Boolean(values.poleDriverId) && values.top10DriverIds.every(Boolean);
 }
 
+export function hasSprintSubmission(pick: PickSubmission | null, race: Pick<Race, 'hasSprint'>): boolean {
+  if (!pick) {
+    return false;
+  }
+
+  if (!race.hasSprint) {
+    return true;
+  }
+
+  return Boolean(pick.sprintWinnerDriverId) && Boolean(pick.sprintSecondDriverId);
+}
+
+export function hasRaceSubmission(pick: PickSubmission | null): boolean {
+  if (!pick) {
+    return false;
+  }
+
+  return Boolean(pick.poleDriverId) && Boolean(pick.top10DriverIds?.length === 10 && pick.top10DriverIds.every(Boolean));
+}
+
 export function scoreRace(pick: PickSubmission, result: RaceResult): ScoreBreakdown {
   const sprintPoints =
     (pick.sprintWinnerDriverId && pick.sprintWinnerDriverId === result.sprintWinnerDriverId ? 2 : 0) +
