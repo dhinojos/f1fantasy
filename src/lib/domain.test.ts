@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildDashboardStats, canViewPick, isRaceLocked, isSprintLocked, scoreRace, validateUniqueDrivers } from '@/lib/domain';
+import { buildDashboardStats, canViewPick, hasAnyRacePicks, hasCompleteRacePicks, isRaceLocked, isSprintLocked, scoreRace, validateUniqueDrivers } from '@/lib/domain';
 import type { PickSubmission, Race, RaceResult, RaceScore } from '@/types/domain';
 import { DRIVER_FIXTURES } from '@/lib/constants';
 
@@ -64,6 +64,32 @@ describe('duplicate driver prevention', () => {
   });
 });
 
+describe('race pick completeness', () => {
+  it('treats empty race fields as no race picks yet', () => {
+    const values = {
+      sprintWinnerDriverId: 'verstappen',
+      sprintSecondDriverId: 'norris',
+      poleDriverId: '',
+      top10DriverIds: Array.from({ length: 10 }, () => ''),
+    };
+
+    expect(hasAnyRacePicks(values)).toBe(false);
+    expect(hasCompleteRacePicks(values)).toBe(false);
+  });
+
+  it('requires the full race section once a race pick has started', () => {
+    const values = {
+      sprintWinnerDriverId: 'verstappen',
+      sprintSecondDriverId: 'norris',
+      poleDriverId: 'verstappen',
+      top10DriverIds: ['verstappen', '', '', '', '', '', '', '', '', ''],
+    };
+
+    expect(hasAnyRacePicks(values)).toBe(true);
+    expect(hasCompleteRacePicks(values)).toBe(false);
+  });
+});
+
 describe('scoring logic', () => {
   it('awards sprint, top 10, exact-position, pole, and podium points correctly', () => {
     expect(scoreRace(basePick, baseResult)).toEqual({
@@ -72,6 +98,27 @@ describe('scoring logic', () => {
       podiumPoints: 5,
       top10Points: 15,
       racePoints: 24,
+    });
+  });
+
+  it('awards the P10 exact-match bonus', () => {
+    const pickWithExactP10: PickSubmission = {
+      ...basePick,
+      poleDriverId: 'norris',
+      top10DriverIds: ['norris', 'leclerc', 'piastri', 'russell', 'hamilton', 'sainz', 'alonso', 'gasly', 'verstappen', 'albon'],
+    };
+
+    const resultWithExactP10: RaceResult = {
+      ...baseResult,
+      top10DriverIds: ['verstappen', 'norris', 'leclerc', 'piastri', 'russell', 'hamilton', 'sainz', 'alonso', 'gasly', 'albon'],
+    };
+
+    expect(scoreRace(pickWithExactP10, resultWithExactP10)).toEqual({
+      sprintPoints: 2,
+      polePoints: 0,
+      podiumPoints: 0,
+      top10Points: 11,
+      racePoints: 13,
     });
   });
 });

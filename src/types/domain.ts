@@ -43,8 +43,8 @@ export interface PickSubmission {
   userId: string;
   sprintWinnerDriverId: string | null;
   sprintSecondDriverId: string | null;
-  poleDriverId: string;
-  top10DriverIds: string[];
+  poleDriverId: string | null;
+  top10DriverIds: string[] | null;
   submittedAt: string;
   updatedAt: string;
   user?: Profile;

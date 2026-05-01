@@ -1,4 +1,4 @@
-import { buildDashboardStats, canViewPick, isRaceLocked, isSprintLocked, validateUniqueDrivers } from '@/lib/domain';
+import { buildDashboardStats, canViewPick, hasAnyRacePicks, hasCompleteRacePicks, isRaceLocked, isSprintLocked, validateUniqueDrivers } from '@/lib/domain';
 import { requireSupabaseClient } from '@/services/supabase/client';
 import { mapPick, mapProfile, mapRace, mapResult, mapScore } from '@/services/supabase/mappers';
 import type { DashboardStats, PickFormValues, PickSubmission, Profile, Race, RaceResult, RaceScore } from '@/types/domain';
@@ -161,12 +161,17 @@ export async function savePick(
     throw new Error('This race is already locked.');
   }
 
-  if (validateUniqueDrivers(values).length > 0) {
+  if (hasAnyRacePicks(values) && validateUniqueDrivers(values).length > 0) {
     throw new Error('Race finishing picks must be unique.');
   }
 
   const existingPick = await fetchCurrentUserPick(race.id, userId);
   const sprintLocked = !allowLockedOverride && race.hasSprint && isSprintLocked(race);
+  const requireCompleteRacePicks = !race.hasSprint || sprintLocked || hasAnyRacePicks(values);
+
+  if (requireCompleteRacePicks && !hasCompleteRacePicks(values)) {
+    throw new Error('Pole and all top 10 positions are required before saving race picks.');
+  }
 
   const payload = {
     race_id: race.id,
@@ -181,8 +186,8 @@ export async function savePick(
         ? existingPick?.sprintSecondDriverId ?? null
         : values.sprintSecondDriverId
       : null,
-    pole_driver_id: values.poleDriverId,
-    top10_driver_ids: values.top10DriverIds,
+    pole_driver_id: hasCompleteRacePicks(values) ? values.poleDriverId : existingPick?.poleDriverId ?? null,
+    top10_driver_ids: hasCompleteRacePicks(values) ? values.top10DriverIds : existingPick?.top10DriverIds ?? null,
   };
 
   const { error } = await requireSupabaseClient().from('picks').upsert(payload, {

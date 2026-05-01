@@ -41,8 +41,8 @@ interface PickRow {
   user_id: string;
   sprint_winner_driver_id: string | null;
   sprint_second_driver_id: string | null;
-  pole_driver_id: string;
-  top10_driver_ids: string[];
+  pole_driver_id: string | null;
+  top10_driver_ids: string[] | null;
   submitted_at: string;
   updated_at: string;
   profiles?: ProfileRow | ProfileRow[] | null;

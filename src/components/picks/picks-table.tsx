@@ -9,6 +9,10 @@ import { cn } from '@/lib/cn';
 import type { PickSubmission, Profile, Race, RaceResult, RaceScore } from '@/types/domain';
 
 function labelForDriver(race: Race, driverId: string): string {
+  if (!driverId) {
+    return 'Not submitted';
+  }
+
   const driver = race.activeDrivers.find((item) => item.id === driverId);
   return driver ? `${driver.code} · ${driver.fullName}` : driverId;
 }
@@ -126,7 +130,7 @@ export function PicksTable({
                 <p className="font-medium text-text">{player.displayName}</p>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted">
                   {pick
-                    ? `${race.hasSprint ? `Sprint: ${labelForDriver(race, pick.sprintWinnerDriverId ?? '')} / ${labelForDriver(race, pick.sprintSecondDriverId ?? '')} · ` : ''}Pole: ${labelForDriver(race, pick.poleDriverId)}`
+                    ? `${race.hasSprint ? `Sprint: ${labelForDriver(race, pick.sprintWinnerDriverId ?? '')} / ${labelForDriver(race, pick.sprintSecondDriverId ?? '')} · ` : ''}Pole: ${labelForDriver(race, pick.poleDriverId ?? '')}`
                     : 'No entry submitted'}
                 </p>
               </div>
@@ -155,16 +159,16 @@ export function PicksTable({
                       labelForDriver(race, pick.sprintSecondDriverId ?? ''),
                       pick.sprintSecondDriverId && result?.sprintSecondDriverId === pick.sprintSecondDriverId ? 1 : 0,
                     )}
-                    {pickPill('Pole', labelForDriver(race, pick.poleDriverId), pick.poleDriverId === result?.poleDriverId ? 2 : 0)}
+                    {pickPill('Pole', labelForDriver(race, pick.poleDriverId ?? ''), pick.poleDriverId && pick.poleDriverId === result?.poleDriverId ? 2 : 0)}
                   </div>
                 ) : (
                   <div className="grid gap-2 md:grid-cols-3">
-                    {pickPill('Pole', labelForDriver(race, pick.poleDriverId), pick.poleDriverId === result?.poleDriverId ? 2 : 0)}
+                    {pickPill('Pole', labelForDriver(race, pick.poleDriverId ?? ''), pick.poleDriverId && pick.poleDriverId === result?.poleDriverId ? 2 : 0)}
                   </div>
                 )}
 
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-                  {pick.top10DriverIds.map((driverId, index) => {
+                  {(pick.top10DriverIds ?? Array.from({ length: 10 }, () => '')).map((driverId, index) => {
                     const points = pointsForTop10Pick(result, driverId, index);
 
                     return (

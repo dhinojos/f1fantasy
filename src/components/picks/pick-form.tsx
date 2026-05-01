@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { AlertTriangle } from 'lucide-react';
 import { PICK_POSITIONS } from '@/lib/constants';
-import { validateUniqueDrivers, isRaceLocked, isSprintLocked } from '@/lib/domain';
+import { hasAnyRacePicks, hasCompleteRacePicks, validateUniqueDrivers, isRaceLocked, isSprintLocked } from '@/lib/domain';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import type { PickFormValues, PickSubmission, Race } from '@/types/domain';
@@ -39,8 +39,8 @@ export function PickForm({
         .object({
           sprintWinnerDriverId: z.string(),
           sprintSecondDriverId: z.string(),
-          poleDriverId: z.string().min(1, 'Pole pick is required'),
-          top10DriverIds: z.array(z.string().min(1, 'Driver is required')).length(10, 'All finishing slots are required'),
+          poleDriverId: z.string(),
+          top10DriverIds: z.array(z.string()).length(10, 'All finishing slots are required'),
         })
         .superRefine((value, ctx) => {
           if (race.hasSprint && !sprintLocked && !value.sprintWinnerDriverId) {
@@ -48,6 +48,23 @@ export function PickForm({
           }
           if (race.hasSprint && !sprintLocked && !value.sprintSecondDriverId) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['sprintSecondDriverId'], message: 'Sprint 2nd pick is required' });
+          }
+          if (!race.hasSprint || sprintLocked || hasAnyRacePicks(value)) {
+            if (!value.poleDriverId) {
+              ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['poleDriverId'], message: 'Pole pick is required' });
+            }
+
+            value.top10DriverIds.forEach((driverId, index) => {
+              if (!driverId) {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['top10DriverIds', index], message: 'Driver is required' });
+              }
+            });
+          }
+          if ((race.hasSprint && sprintLocked) || !race.hasSprint) {
+            return;
+          }
+          if (hasAnyRacePicks(value) && !hasCompleteRacePicks(value)) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['top10DriverIds'], message: 'Finish all pole and top 10 picks before saving race picks.' });
           }
         }),
     ),
@@ -74,6 +91,11 @@ export function PickForm({
           <div className="flex items-start gap-3 rounded-2xl border border-accent2/20 bg-accent2/10 px-4 py-4 text-sm text-accent2">
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
             <span>Sprint picks are locked. You can still update pole and race finishing positions until the race lock.</span>
+          </div>
+        ) : race.hasSprint ? (
+          <div className="flex items-start gap-3 rounded-2xl border border-accent2/20 bg-accent2/10 px-4 py-4 text-sm text-accent2">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+            <span>You can save sprint picks now and come back later for pole and the top 10. Once you start race picks, all race slots must be completed before saving.</span>
           </div>
         ) : null}
 

@@ -63,8 +63,8 @@ create table if not exists public.picks (
   user_id uuid not null references public.profiles(id) on delete cascade,
   sprint_winner_driver_id text references public.drivers(id),
   sprint_second_driver_id text references public.drivers(id),
-  pole_driver_id text not null references public.drivers(id),
-  top10_driver_ids text[] not null check (cardinality(top10_driver_ids) = 10),
+  pole_driver_id text references public.drivers(id),
+  top10_driver_ids text[] check (cardinality(top10_driver_ids) = 10),
   submitted_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now()),
   unique (race_id, user_id),
@@ -75,6 +75,8 @@ alter table public.picks add column if not exists sprint_winner_driver_id text r
 alter table public.picks add column if not exists sprint_second_driver_id text references public.drivers(id);
 alter table public.picks alter column sprint_winner_driver_id drop not null;
 alter table public.picks alter column sprint_second_driver_id drop not null;
+alter table public.picks alter column pole_driver_id drop not null;
+alter table public.picks alter column top10_driver_ids drop not null;
 
 create table if not exists public.results (
   id uuid primary key default gen_random_uuid(),

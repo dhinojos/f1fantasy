@@ -39,16 +39,24 @@ export function validateUniqueDrivers(values: PickFormValues): string[] {
   return Array.from(new Set(duplicates));
 }
 
+export function hasAnyRacePicks(values: PickFormValues): boolean {
+  return Boolean(values.poleDriverId) || values.top10DriverIds.some(Boolean);
+}
+
+export function hasCompleteRacePicks(values: PickFormValues): boolean {
+  return Boolean(values.poleDriverId) && values.top10DriverIds.every(Boolean);
+}
+
 export function scoreRace(pick: PickSubmission, result: RaceResult): ScoreBreakdown {
   const sprintPoints =
     (pick.sprintWinnerDriverId && pick.sprintWinnerDriverId === result.sprintWinnerDriverId ? 2 : 0) +
     (pick.sprintSecondDriverId && pick.sprintSecondDriverId === result.sprintSecondDriverId ? 1 : 0);
-  const polePoints = pick.poleDriverId === result.poleDriverId ? 2 : 0;
+  const polePoints = pick.poleDriverId && pick.poleDriverId === result.poleDriverId ? 2 : 0;
   let podiumPoints = 0;
   let top10Points = 0;
 
-  for (let index = 0; index < pick.top10DriverIds.length; index += 1) {
-    const predictedDriver = pick.top10DriverIds[index];
+  for (let index = 0; index < (pick.top10DriverIds ?? []).length; index += 1) {
+    const predictedDriver = pick.top10DriverIds?.[index];
     const actualDriver = result.top10DriverIds[index];
 
     if (!predictedDriver || !actualDriver) {
@@ -139,9 +147,9 @@ export function buildDashboardStats(args: {
   latestResult: RaceResult | null;
   drivers: Driver[];
 }): DashboardStats {
-  const poleSelections = args.allVisiblePicks.map((pick) => pick.poleDriverId);
-  const winnerSelections = args.allVisiblePicks.map((pick) => pick.top10DriverIds[0]).filter(Boolean) as string[];
-  const allTop10Selections = args.allVisiblePicks.flatMap((pick) => pick.top10DriverIds);
+  const poleSelections = args.allVisiblePicks.map((pick) => pick.poleDriverId).filter(Boolean) as string[];
+  const winnerSelections = args.allVisiblePicks.map((pick) => pick.top10DriverIds?.[0]).filter(Boolean) as string[];
+  const allTop10Selections = args.allVisiblePicks.flatMap((pick) => pick.top10DriverIds ?? []).filter(Boolean);
 
   const accuracyByUser = args.lastRaceScores.map((score) => ({
     userId: score.userId,
