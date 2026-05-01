@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildDashboardStats, canViewPick, hasAnyRacePicks, hasCompleteRacePicks, hasRaceSubmission, hasSprintSubmission, isRaceLocked, isSprintLocked, scoreRace, validateUniqueDrivers } from '@/lib/domain';
+import { buildDashboardStats, canViewPick, canViewRacePicks, canViewSprintPicks, hasAnyRacePicks, hasCompleteRacePicks, hasRaceSubmission, hasSprintSubmission, isRaceLocked, isSprintLocked, scoreRace, validateUniqueDrivers } from '@/lib/domain';
 import type { PickSubmission, Race, RaceResult, RaceScore } from '@/types/domain';
 import { DRIVER_FIXTURES } from '@/lib/constants';
 
@@ -13,6 +13,8 @@ const basePick: PickSubmission = {
   top10DriverIds: ['verstappen', 'norris', 'leclerc', 'piastri', 'russell', 'hamilton', 'sainz', 'alonso', 'gasly', 'albon'],
   submittedAt: '2026-03-01T12:00:00.000Z',
   updatedAt: '2026-03-01T12:00:00.000Z',
+  visibleSprint: true,
+  visibleRace: true,
 };
 
 const baseResult: RaceResult = {
@@ -35,6 +37,12 @@ const sprintRace: Race = {
   hasSprint: true,
   status: 'upcoming',
   activeDrivers: DRIVER_FIXTURES,
+};
+
+const nonSprintRace: Race = {
+  ...sprintRace,
+  hasSprint: false,
+  sprintLockAt: null,
 };
 
 describe('lock deadline behavior', () => {
@@ -143,6 +151,16 @@ describe('visibility rules after lock', () => {
 
   it('shows all picks after lock', () => {
     expect(canViewPick('user-1', 'user-2', '2026-03-09T12:00:00.000Z', new Date('2026-03-09T12:00:01.000Z'))).toBe(true);
+  });
+
+  it('shows sprint picks to everyone after sprint lock but before race lock', () => {
+    expect(canViewSprintPicks('user-1', 'user-2', sprintRace, new Date('2026-12-08T12:00:01.000Z'))).toBe(true);
+    expect(canViewRacePicks('user-1', 'user-2', sprintRace, new Date('2026-12-08T12:00:01.000Z'))).toBe(false);
+  });
+
+  it('keeps non-sprint races hidden until race lock', () => {
+    expect(canViewSprintPicks('user-1', 'user-2', nonSprintRace, new Date('2026-12-08T12:00:01.000Z'))).toBe(false);
+    expect(canViewRacePicks('user-1', 'user-2', nonSprintRace, new Date('2026-12-08T12:00:01.000Z'))).toBe(false);
   });
 });
 

@@ -47,6 +47,10 @@ export interface PickSubmission {
   top10DriverIds: string[] | null;
   submittedAt: string;
   updatedAt: string;
+  visibleSprint: boolean;
+  visibleRace: boolean;
+  sprintSubmitted?: boolean;
+  raceSubmitted?: boolean;
   user?: Profile;
 }
 

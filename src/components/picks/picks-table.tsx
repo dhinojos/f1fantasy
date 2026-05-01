@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
-import { scoreRace } from '@/lib/domain';
+import { hasRaceSubmission, hasSprintSubmission, scoreRace } from '@/lib/domain';
 import { formatRaceDate } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import type { PickSubmission, Profile, Race, RaceResult, RaceScore } from '@/types/domain';
@@ -97,6 +97,19 @@ export function PicksTable({
     );
   }
 
+  function hiddenPill(label: string, message: string) {
+    return (
+      <div className="min-w-0 rounded-2xl border border-dashed border-white/10 bg-transparent px-3 py-2">
+        <div className="flex items-center justify-between gap-2">
+          <span className="shrink-0 text-xs uppercase tracking-[0.2em] text-muted">{label}</span>
+        </div>
+        <p className="mt-2 truncate font-medium text-muted" title={message}>
+          {message}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <Card
       eyebrow={`Round ${race.roundNumber}`}
@@ -122,6 +135,9 @@ export function PicksTable({
       <div className="space-y-4">
         {rows.map(({ player, pick, score }) => {
           const breakdown = pick && result ? scoreRace(pick, result) : null;
+          const sprintSubmitted = pick ? (pick.sprintSubmitted ?? hasSprintSubmission(pick, race)) : false;
+          const raceSubmitted = pick ? (pick.raceSubmitted ?? hasRaceSubmission(pick)) : false;
+          const hasAnySubmission = sprintSubmitted || raceSubmitted;
 
           return (
           <div key={player.id} className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
@@ -129,10 +145,20 @@ export function PicksTable({
               <div>
                 <p className="font-medium text-text">{player.displayName}</p>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted">
-                  {pick
-                    ? `${race.hasSprint ? `Sprint: ${labelForDriver(race, pick.sprintWinnerDriverId ?? '')} / ${labelForDriver(race, pick.sprintSecondDriverId ?? '')} · ` : ''}Pole: ${labelForDriver(race, pick.poleDriverId ?? '')}`
-                    : 'No entry submitted'}
+                  {!hasAnySubmission
+                    ? 'Not submitted'
+                    : race.hasSprint
+                      ? `Sprint ${sprintSubmitted ? 'submitted' : 'missing'} · Race ${raceSubmitted ? 'submitted' : 'missing'}`
+                      : `Race ${raceSubmitted ? 'submitted' : 'missing'}`}
                 </p>
+                {pick ? (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {race.hasSprint ? (
+                      <Badge tone={sprintSubmitted ? 'success' : 'warning'}>{`Sprint ${sprintSubmitted ? 'submitted' : 'missing'}`}</Badge>
+                    ) : null}
+                    <Badge tone={raceSubmitted ? 'success' : 'warning'}>{`Race ${raceSubmitted ? 'submitted' : 'missing'}`}</Badge>
+                  </div>
+                ) : null}
               </div>
               <div className="text-right">
                 {score ? (
@@ -149,31 +175,39 @@ export function PicksTable({
               <div className="space-y-2">
                 {race.hasSprint ? (
                   <div className="grid gap-2 md:grid-cols-3">
-                    {pickPill(
-                      'Sprint 1',
-                      labelForDriver(race, pick.sprintWinnerDriverId ?? ''),
-                      pick.sprintWinnerDriverId && result?.sprintWinnerDriverId === pick.sprintWinnerDriverId ? 2 : 0,
-                    )}
-                    {pickPill(
-                      'Sprint 2',
-                      labelForDriver(race, pick.sprintSecondDriverId ?? ''),
-                      pick.sprintSecondDriverId && result?.sprintSecondDriverId === pick.sprintSecondDriverId ? 1 : 0,
-                    )}
-                    {pickPill('Pole', labelForDriver(race, pick.poleDriverId ?? ''), pick.poleDriverId && pick.poleDriverId === result?.poleDriverId ? 2 : 0)}
+                    {pick.visibleSprint
+                      ? pickPill(
+                          'Sprint 1',
+                          labelForDriver(race, pick.sprintWinnerDriverId ?? ''),
+                          pick.sprintWinnerDriverId && result?.sprintWinnerDriverId === pick.sprintWinnerDriverId ? 2 : 0,
+                        )
+                      : hiddenPill('Sprint 1', 'Hidden until sprint lock')}
+                    {pick.visibleSprint
+                      ? pickPill(
+                          'Sprint 2',
+                          labelForDriver(race, pick.sprintSecondDriverId ?? ''),
+                          pick.sprintSecondDriverId && result?.sprintSecondDriverId === pick.sprintSecondDriverId ? 1 : 0,
+                        )
+                      : hiddenPill('Sprint 2', 'Hidden until sprint lock')}
+                    {pick.visibleRace
+                      ? pickPill('Pole', labelForDriver(race, pick.poleDriverId ?? ''), pick.poleDriverId && pick.poleDriverId === result?.poleDriverId ? 2 : 0)
+                      : hiddenPill('Pole', 'Hidden until race lock')}
                   </div>
                 ) : (
                   <div className="grid gap-2 md:grid-cols-3">
-                    {pickPill('Pole', labelForDriver(race, pick.poleDriverId ?? ''), pick.poleDriverId && pick.poleDriverId === result?.poleDriverId ? 2 : 0)}
+                    {pick.visibleRace
+                      ? pickPill('Pole', labelForDriver(race, pick.poleDriverId ?? ''), pick.poleDriverId && pick.poleDriverId === result?.poleDriverId ? 2 : 0)
+                      : hiddenPill('Pole', 'Hidden until race lock')}
                   </div>
                 )}
 
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-                  {(pick.top10DriverIds ?? Array.from({ length: 10 }, () => '')).map((driverId, index) => {
+                  {(pick.visibleRace ? (pick.top10DriverIds ?? Array.from({ length: 10 }, () => '')) : Array.from({ length: 10 }, () => '')).map((driverId, index) => {
                     const points = pointsForTop10Pick(result, driverId, index);
 
                     return (
                       <div key={`${pick.id}-${driverId}-${index}`}>
-                        {pickPill(`P${index + 1}`, labelForDriver(race, driverId), points)}
+                        {pick.visibleRace ? pickPill(`P${index + 1}`, labelForDriver(race, driverId), points) : hiddenPill(`P${index + 1}`, 'Hidden until race lock')}
                       </div>
                     );
                   })}

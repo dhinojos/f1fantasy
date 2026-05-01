@@ -127,6 +127,8 @@ export function mapPick(row: PickRow): PickSubmission {
     top10DriverIds: row.top10_driver_ids,
     submittedAt: row.submitted_at,
     updatedAt: row.updated_at,
+    visibleSprint: true,
+    visibleRace: true,
     user: firstRelation(row.profiles) ? mapProfile(firstRelation(row.profiles)!) : undefined,
   };
 }

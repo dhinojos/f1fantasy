@@ -124,6 +124,36 @@ export function canViewPick(
   return true;
 }
 
+export function canViewSprintPicks(
+  viewerUserId: string,
+  pickUserId: string,
+  race: Pick<Race, 'hasSprint' | 'sprintLockAt' | 'lockAt'>,
+  now = new Date(),
+): boolean {
+  if (viewerUserId === pickUserId) {
+    return true;
+  }
+
+  if (!race.hasSprint) {
+    return isRaceLocked(race.lockAt, now);
+  }
+
+  return isSprintLocked(race, now);
+}
+
+export function canViewRacePicks(
+  viewerUserId: string,
+  pickUserId: string,
+  race: Pick<Race, 'lockAt'>,
+  now = new Date(),
+): boolean {
+  if (!isRaceLocked(race.lockAt, now)) {
+    return viewerUserId === pickUserId;
+  }
+
+  return true;
+}
+
 export function deriveInsightLabel(driverId: string | null, drivers: Driver[]): string | null {
   if (!driverId) {
     return null;

@@ -1,4 +1,4 @@
-import { buildDashboardStats, canViewPick, hasAnyRacePicks, hasCompleteRacePicks, isRaceLocked, isSprintLocked, validateUniqueDrivers } from '@/lib/domain';
+import { buildDashboardStats, canViewRacePicks, canViewSprintPicks, hasAnyRacePicks, hasCompleteRacePicks, hasRaceSubmission, hasSprintSubmission, isRaceLocked, isSprintLocked, validateUniqueDrivers } from '@/lib/domain';
 import { requireSupabaseClient } from '@/services/supabase/client';
 import { mapPick, mapProfile, mapRace, mapResult, mapScore } from '@/services/supabase/mappers';
 import type { DashboardStats, PickFormValues, PickSubmission, Profile, Race, RaceResult, RaceScore } from '@/types/domain';
@@ -133,7 +133,26 @@ export async function fetchVisiblePicks(race: Race, viewerId: string): Promise<P
     throw error;
   }
 
-  return (data ?? []).map(mapPick).filter((pick) => canViewPick(viewerId, pick.userId, race.lockAt));
+  return (data ?? [])
+    .map(mapPick)
+    .map((pick) => {
+      const visibleSprint = canViewSprintPicks(viewerId, pick.userId, race);
+      const visibleRace = canViewRacePicks(viewerId, pick.userId, race);
+      const sprintSubmitted = hasSprintSubmission(pick, race);
+      const raceSubmitted = hasRaceSubmission(pick);
+
+      return {
+        ...pick,
+        sprintWinnerDriverId: visibleSprint ? pick.sprintWinnerDriverId : null,
+        sprintSecondDriverId: visibleSprint ? pick.sprintSecondDriverId : null,
+        poleDriverId: visibleRace ? pick.poleDriverId : null,
+        top10DriverIds: visibleRace ? pick.top10DriverIds : null,
+        visibleSprint,
+        visibleRace,
+        sprintSubmitted,
+        raceSubmitted,
+      };
+    });
 }
 
 export async function fetchRaceScores(raceId: string): Promise<RaceScore[]> {
