@@ -86,6 +86,12 @@ export function PickForm({
 
   const values = watch();
   const duplicates = useMemo(() => validateUniqueDrivers(values), [values]);
+  const completedPicks =
+    values.top10DriverIds.filter(Boolean).length +
+    Number(Boolean(values.poleDriverId)) +
+    (race.hasSprint ? Number(Boolean(values.sprintWinnerDriverId)) + Number(Boolean(values.sprintSecondDriverId)) : 0);
+  const totalPicks = race.hasSprint ? 13 : 11;
+  const progressPercent = (completedPicks / totalPicks) * 100;
 
   return (
     <Card eyebrow={eyebrow ?? `Round ${race.roundNumber}`} title={title ?? `${race.grandPrixName} picks`}>
@@ -107,95 +113,88 @@ export function PickForm({
           </div>
         ) : null}
 
-        <div className="grid gap-4 lg:grid-cols-[1.1fr,1fr]">
-          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-            <div className="grid gap-4">
-              {race.hasSprint ? (
-                <>
-                  <div>
-                    <label className="mb-2 block text-xs uppercase tracking-[0.3em] text-muted">Sprint 1st</label>
-                    <Controller
-                      control={control}
-                      name="sprintWinnerDriverId"
-                      render={({ field }) => (
-                        <select
-                          {...field}
-                          disabled={sprintLocked}
-                          className="w-full rounded-2xl border border-white/10 bg-panel px-4 py-3 text-text outline-none transition focus:border-accent"
-                        >
-                          <option value="">Select driver</option>
-                          {race.activeDrivers.map((driver) => (
-                            <option key={driver.id} value={driver.id}>
-                              {driver.code} · {driver.fullName}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    />
-                    {errors.sprintWinnerDriverId ? <p className="mt-2 text-sm text-accent">{errors.sprintWinnerDriverId.message}</p> : null}
-                  </div>
-                  <div>
-                    <label className="mb-2 block text-xs uppercase tracking-[0.3em] text-muted">Sprint 2nd</label>
-                    <Controller
-                      control={control}
-                      name="sprintSecondDriverId"
-                      render={({ field }) => (
-                        <select
-                          {...field}
-                          disabled={sprintLocked}
-                          className="w-full rounded-2xl border border-white/10 bg-panel px-4 py-3 text-text outline-none transition focus:border-accent"
-                        >
-                          <option value="">Select driver</option>
-                          {race.activeDrivers.map((driver) => (
-                            <option key={driver.id} value={driver.id}>
-                              {driver.code} · {driver.fullName}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    />
-                    {errors.sprintSecondDriverId ? <p className="mt-2 text-sm text-accent">{errors.sprintSecondDriverId.message}</p> : null}
-                  </div>
-                </>
-              ) : null}
-              <div>
-                <label className="mb-2 block text-xs uppercase tracking-[0.3em] text-muted">Pole position</label>
-                <Controller
-                  control={control}
-                  name="poleDriverId"
-                  render={({ field }) => (
-                    <select
-                      {...field}
-                      disabled={raceLocked}
-                      className="w-full rounded-2xl border border-white/10 bg-panel px-4 py-3 text-text outline-none transition focus:border-accent"
-                    >
-                      <option value="">Select driver</option>
-                      {race.activeDrivers.map((driver) => (
-                        <option key={driver.id} value={driver.id}>
-                          {driver.code} · {driver.fullName}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                />
-                {errors.poleDriverId ? <p className="mt-2 text-sm text-accent">{errors.poleDriverId.message}</p> : null}
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-            <p className="text-xs uppercase tracking-[0.3em] text-muted">Submission status</p>
-            <p className="mt-3 font-display text-4xl font-bold text-text">{`${values.top10DriverIds.filter(Boolean).length + Number(Boolean(values.poleDriverId)) + (race.hasSprint ? Number(Boolean(values.sprintWinnerDriverId)) + Number(Boolean(values.sprintSecondDriverId)) : 0)}/${race.hasSprint ? 13 : 11}`}</p>
-            <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
-              <div
-                className="h-full rounded-full bg-accent transition-all"
-                style={{ width: `${((values.top10DriverIds.filter(Boolean).length + Number(Boolean(values.poleDriverId)) + (race.hasSprint ? Number(Boolean(values.sprintWinnerDriverId)) + Number(Boolean(values.sprintSecondDriverId)) : 0)) / (race.hasSprint ? 13 : 11)) * 100}%` }}
-              />
-            </div>
+        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+          <p className="text-xs uppercase tracking-[0.3em] text-muted">Submission status</p>
+          <p className="mt-3 font-display text-4xl font-bold text-text">{`${completedPicks}/${totalPicks}`}</p>
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+            <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${progressPercent}%` }} />
           </div>
         </div>
 
+        {race.hasSprint ? (
+          <div className="grid gap-3">
+            <div className="grid grid-cols-[96px,1fr] items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+              <div className="font-display text-2xl font-bold text-text">Sprint P1</div>
+              <Controller
+                control={control}
+                name="sprintWinnerDriverId"
+                render={({ field }) => (
+                  <select
+                    {...field}
+                    disabled={sprintLocked}
+                    className="w-full rounded-2xl border border-white/10 bg-panel px-4 py-3 text-text outline-none transition focus:border-accent"
+                  >
+                    <option value="">Select driver</option>
+                    {race.activeDrivers.map((driver) => (
+                      <option key={driver.id} value={driver.id}>
+                        {driver.code} · {driver.fullName}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              />
+            </div>
+            {errors.sprintWinnerDriverId ? <p className="text-sm text-accent">{errors.sprintWinnerDriverId.message}</p> : null}
+
+            <div className="grid grid-cols-[96px,1fr] items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+              <div className="font-display text-2xl font-bold text-text">Sprint P2</div>
+              <Controller
+                control={control}
+                name="sprintSecondDriverId"
+                render={({ field }) => (
+                  <select
+                    {...field}
+                    disabled={sprintLocked}
+                    className="w-full rounded-2xl border border-white/10 bg-panel px-4 py-3 text-text outline-none transition focus:border-accent"
+                  >
+                    <option value="">Select driver</option>
+                    {race.activeDrivers.map((driver) => (
+                      <option key={driver.id} value={driver.id}>
+                        {driver.code} · {driver.fullName}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              />
+            </div>
+            {errors.sprintSecondDriverId ? <p className="text-sm text-accent">{errors.sprintSecondDriverId.message}</p> : null}
+          </div>
+        ) : null}
+
         <div className="grid gap-3">
+          <div className="grid grid-cols-[72px,1fr] items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+            <div className="font-display text-2xl font-bold text-text">Pole</div>
+            <Controller
+              control={control}
+              name="poleDriverId"
+              render={({ field }) => (
+                <select
+                  {...field}
+                  disabled={raceLocked}
+                  className="w-full rounded-2xl border border-white/10 bg-panel px-4 py-3 text-text outline-none transition focus:border-accent"
+                >
+                  <option value="">Select driver</option>
+                  {race.activeDrivers.map((driver) => (
+                    <option key={driver.id} value={driver.id}>
+                      {driver.code} · {driver.fullName}
+                    </option>
+                  ))}
+                </select>
+              )}
+            />
+          </div>
+          {errors.poleDriverId ? <p className="text-sm text-accent">{errors.poleDriverId.message}</p> : null}
+
           {PICK_POSITIONS.map((position, index) => (
             <div key={position} className="grid grid-cols-[72px,1fr] items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
               <div className="font-display text-2xl font-bold text-text">P{position}</div>
