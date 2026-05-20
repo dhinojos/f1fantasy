@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,6 +8,15 @@ import { hasAnyRacePicks, hasCompleteRacePicks, validateUniqueDrivers, isRaceLoc
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import type { PickFormValues, PickSubmission, Race } from '@/types/domain';
+
+function buildPickFormValues(existingPick: PickSubmission | null): PickFormValues {
+  return {
+    sprintWinnerDriverId: existingPick?.sprintWinnerDriverId ?? '',
+    sprintSecondDriverId: existingPick?.sprintSecondDriverId ?? '',
+    poleDriverId: existingPick?.poleDriverId ?? '',
+    top10DriverIds: existingPick?.top10DriverIds ?? Array.from({ length: 10 }, () => ''),
+  };
+}
 
 export function PickForm({
   race,
@@ -24,13 +33,13 @@ export function PickForm({
   title?: string;
   eyebrow?: string;
 }) {
-  const defaultTop10 = existingPick?.top10DriverIds ?? Array.from({ length: 10 }, () => '');
   const sprintLocked = !allowLockedEditing && race.hasSprint && isSprintLocked(race);
   const raceLocked = !allowLockedEditing && isRaceLocked(race.lockAt);
 
   const {
     control,
     handleSubmit,
+    reset,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<PickFormValues>({
@@ -68,13 +77,12 @@ export function PickForm({
           }
         }),
     ),
-    defaultValues: {
-      sprintWinnerDriverId: existingPick?.sprintWinnerDriverId ?? '',
-      sprintSecondDriverId: existingPick?.sprintSecondDriverId ?? '',
-      poleDriverId: existingPick?.poleDriverId ?? '',
-      top10DriverIds: defaultTop10,
-    },
+    defaultValues: buildPickFormValues(existingPick),
   });
+
+  useEffect(() => {
+    reset(buildPickFormValues(existingPick));
+  }, [existingPick, race.id, reset]);
 
   const values = watch();
   const duplicates = useMemo(() => validateUniqueDrivers(values), [values]);
