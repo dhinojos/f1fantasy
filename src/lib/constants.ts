@@ -178,5 +178,13 @@ export const DRIVER_FIXTURES: Driver[] = [
     teamName: 'Red Bull',
     teamColor: '#3671c6',
     carNumber: 3
+  },
+  {
+    id: 'tsunoda',
+    code: 'TSU',
+    fullName: 'Yuki Tsunoda',
+    teamName: 'Racing Bulls',
+    teamColor: '#6692ff',
+    carNumber: 22
   }
 ];
